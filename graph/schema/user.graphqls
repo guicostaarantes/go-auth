@@ -1,0 +1,41 @@
+enum Role @goModel(model: "github.com/guicostaarantes/go-auth/modules/users/models.Role") {
+	ADMIN
+	BASIC
+}
+
+input AuthenticateUserInput @goModel(model: "github.com/guicostaarantes/go-auth/modules/users/commands.AuthenticateUserInput") {
+	email: String!
+	password: String!
+}
+
+input CreateUserInput @goModel(model: "github.com/guicostaarantes/go-auth/modules/users/commands.CreateUserInput") {
+	email: String!
+	password: String!
+	role: Role!
+}
+
+type User @goModel(model: "github.com/guicostaarantes/go-auth/modules/users/models.User") {
+	id: ID!
+	email: String!
+	role: Role!
+}
+
+type Query {
+	myUser: User! @hasRole(role: [ADMIN,BASIC])
+}
+
+type Mutation {
+	authenticateUser(input: AuthenticateUserInput!): String!
+	createUser(input: CreateUserInput!): Boolean! @hasRole(role: [ADMIN])
+}
+
+directive @hasRole(role: [Role!]!) on FIELD_DEFINITION
+directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITION
+    | FIELD_DEFINITION
+directive @goModel(model: String, models: [String!]) on OBJECT
+    | INPUT_OBJECT
+    | SCALAR
+    | ENUM
+    | INTERFACE
+    | UNION
+

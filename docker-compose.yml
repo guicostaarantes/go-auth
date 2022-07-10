@@ -1,0 +1,85 @@
+version: "3.8"
+services:
+
+  postgres:
+    image: postgres:14.0-alpine3.14
+    environment:
+      POSTGRES_PASSWORD: ac55647e-21e5-44be-880a-1cb04a2340ec
+    volumes:
+      - ./.tmp/postgres:/var/lib/postgresql/data
+    restart: always
+
+  adminer:
+    image: adminer:4
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    ports:
+      - 7071:8080
+    restart: always
+
+  redis:
+    image: redis:7.0-alpine
+    restart: always
+    command: redis-server --save 20 1 --loglevel warning --requirepass e859bd25-5297-4e76-97ce-2146328fa30d
+    volumes: 
+      - ./.tmp/redis:/data
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    restart: always
+    environment:
+      REDIS_HOSTS: local:redis:6379:0:e859bd25-5297-4e76-97ce-2146328fa30d
+    ports:
+      - 7072:8081
+
+  zookeeper0:
+    image: confluentinc/cp-zookeeper:5.2.4
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    restart: always
+
+  kafka0:
+    image: confluentinc/cp-kafka:5.3.1
+    depends_on:
+      - zookeeper0
+    volumes:
+      - ./.tmp/kafka:/var/lib/kafka/data
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper0:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka0:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    restart: always
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - 7073:8080
+    depends_on:
+      - zookeeper0
+      - kafka0
+    environment:
+      KAFKA_CLUSTERS_0_NAME: cluster0
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka0:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper0:2181
+    restart: always
+
+  app:
+    build:
+      context: .
+    ports:
+      - 7070:8080
+      # - 40000:40000 # only needed for debug
+    environment:
+      BOOTSTRAP_ADMIN: john@admin.com|123456
+      POSTGRES_DSN: host=postgres user=postgres password=ac55647e-21e5-44be-880a-1cb04a2340ec dbname=postgres port=5432
+      REDIS_CONNECTION_URL: redis://default:e859bd25-5297-4e76-97ce-2146328fa30d@redis:6379/0
+      KAFKA_BOOTSTRAP_SERVERS: kafka0:29092
+      KAFKA_UNIQUE_CONSUMER_ID: bdcd51e8-214e-4be4-9c04-13e73fb23244
+    depends_on:
+      - postgres
+      - kafka0
+    restart: always
