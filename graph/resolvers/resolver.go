@@ -12,6 +12,7 @@ import (
 	store_util "github.com/guicostaarantes/go-auth/utils/store"
 	stream_util "github.com/guicostaarantes/go-auth/utils/stream"
 	token_store_util "github.com/guicostaarantes/go-auth/utils/token_store"
+	uid_util "github.com/guicostaarantes/go-auth/utils/uid"
 )
 
 // This file will not be regenerated automatically.
@@ -31,11 +32,12 @@ type ResolverUtils struct {
 	Store      store_util.I
 	Stream     stream_util.I
 	TokenStore token_store_util.I
+	UID        uid_util.I
 }
 
 type ResolverCommands struct {
 	AuthenticateUser *users_commands.AuthenticateUser
-	CreateUser *users_commands.CreateUser
+	CreateUser       *users_commands.CreateUser
 }
 
 type ResolverQueries struct {
@@ -64,16 +66,18 @@ func anyNilFields(v interface{}) (string, string) {
 func CreateResolver(utils *ResolverUtils) (*Resolver, error) {
 	commands := &ResolverCommands{
 		AuthenticateUser: &users_commands.AuthenticateUser{
-			HashUtil:   utils.Hash,
-			LogUtil:    utils.Log,
-			StoreUtil:  utils.Store,
-			TokenStoreUtil:  utils.TokenStore,
+			HashUtil:       utils.Hash,
+			LogUtil:        utils.Log,
+			StoreUtil:      utils.Store,
+			TokenStoreUtil: utils.TokenStore,
+			UIDUtil:        utils.UID,
 		},
 		CreateUser: &users_commands.CreateUser{
 			HashUtil:   utils.Hash,
 			LogUtil:    utils.Log,
 			StreamUtil: utils.Stream,
 			StoreUtil:  utils.Store,
+			UIDUtil:    utils.UID,
 		},
 	}
 

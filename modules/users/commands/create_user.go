@@ -10,6 +10,7 @@ import (
 	log_util "github.com/guicostaarantes/go-auth/utils/log"
 	store_util "github.com/guicostaarantes/go-auth/utils/store"
 	stream_util "github.com/guicostaarantes/go-auth/utils/stream"
+	uid_util "github.com/guicostaarantes/go-auth/utils/uid"
 )
 
 type CreateUserInput struct {
@@ -24,6 +25,7 @@ type CreateUser struct {
 	LogUtil    log_util.I
 	StreamUtil stream_util.I
 	StoreUtil  store_util.I
+	UIDUtil    uid_util.I
 }
 
 func (c CreateUser) ExecuteCommand(input CreateUserInput) (bool, error) {
@@ -45,7 +47,7 @@ func (c CreateUser) ExecuteCommand(input CreateUserInput) (bool, error) {
 		return false, fmt.Errorf("internal server error")
 	}
 
-	user.ID = uuid.Must(uuid.NewV4()).String()
+	user.ID = c.UIDUtil.Generate()
 	user.Active = true
 	user.Email = input.Email
 	user.Password = hashedPassword
